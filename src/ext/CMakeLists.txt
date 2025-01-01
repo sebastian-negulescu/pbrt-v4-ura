@@ -57,7 +57,7 @@ set (ZLIB_LIBRARIES ${ZLIB_LIBARIES} PARENT_SCOPE)
 ###########################################################################
 # OpenEXR
 
-find_package (OpenEXR)
+find_package (OpenEXR 2.3) # 2.3 is a workaround to force NOT_OPENEXR_FOUND
 
 if (OPENEXR_FOUND)
   message (STATUS "Found OpenEXR version ${OPENEXR_VERSION}")
@@ -65,7 +65,10 @@ if (OPENEXR_FOUND)
   if (WIN32)
     set (OPENEXR_LIBS ${OPENEXR_LIBRARIES} ${ZLIB_LIBRARY} PARENT_SCOPE)
   else ()
-    set (OPENEXR_LIBS ${OPENEXR_LIBRARIES} PARENT_SCOPE)
+    # For some reason, this includes IlmThreadConfig which cannot be found
+    # set (OPENEXR_LIBS ${OPENEXR_LIBRARIES} PARENT_SCOPE)
+    # Explicitly define instead like below
+    set (OPENEXR_LIBS OpenEXR::IlmImf IlmBase::Imath IlmBase::Half PARENT_SCOPE)
   endif ()
 else ()
   message (STATUS "OpenEXR not found; building it from scratch.")
