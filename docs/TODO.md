@@ -18,3 +18,23 @@ I should probably find my own scattering coefficients to use.
 
 Also, with this second way, we can include more phase functions like Mie and Rayleigh.
 
+## Schedule
+
+### First Version
+
+- [ ] Research seawater and distilled water scattering coefficients
+- [ ] Make comparison scene for different phase functions in Blender
+- [ ] Specify the way that results will be compared
+- [ ] Add Mie phase function
+- [ ] Add Rayleigh phase function
+- [ ] Compare all 4 scattering functions: HG, EC, Mie, Rayleigh
+- [ ] Write report
+
+### Second Version
+
+- [ ] Make comparison scene for different phase functions in Blender
+- [ ] Specify the way that results will be compared
+- [ ] Create simplified Integrator that scatters on entry and exit, and uses MFP for absorption
+- [ ] Compare 2 scattering functions: HG, EC
+- [ ] Write report
+
