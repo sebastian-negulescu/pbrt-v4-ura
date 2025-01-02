@@ -295,6 +295,7 @@ PBRT_CPU_GPU inline Float Pow(Float base, Float exp) {
 }
 #else
     PBRT_CPU_GPU inline constexpr Float Pow(Float base, Float exp) {
+        return std::pow(base, exp);
 }
 #endif
 
