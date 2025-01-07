@@ -1,0 +1,51 @@
+LookAt 3 4 1.5  # eye
+       .5 .5 0  # look at point
+       0 0 1    # up vector
+Camera "perspective" "float fov" 45
+
+Sampler "halton" "integer pixelsamples" 128
+Integrator "volpath"
+Film "rgb" "string filename" "./images/test_scatter.png"
+     "integer xresolution" [400] "integer yresolution" [400]
+
+WorldBegin
+
+# uniform blue-ish illumination from all directions
+LightSource "infinite" "rgb L" [ .4 .45 .5 ]
+
+# approximate the sun
+LightSource "distant"  "point3 from" [ -30 40  100 ]
+    "blackbody L" 3000 "float scale" 1.5
+
+# add an emissive to see the scattering
+AttributeBegin
+    AreaLightSource "diffuse" 
+        "blackbody L" [ 6500 ] 
+        "float power" [ 100 ]
+    Translate -2 -2 -0.75
+    Shape "sphere" "float radius" [ .25 ]
+AttributeEnd
+
+MakeNamedMedium "simple_medium" 
+    "string type" "homogeneous" 
+    "string phase_function" "Henyey-Greenstein"
+    # "string phase_function" "Exponentiated Cosine"
+    # "float n" 144
+
+AttributeBegin
+  Material "dielectric" # don't give it any characteristics
+  MediumInterface "simple_medium" ""
+  Shape "sphere" "float radius" 1
+AttributeEnd
+
+AttributeBegin
+  Texture "checks" "spectrum" "checkerboard"
+          "float uscale" [16] "float vscale" [16]
+          "rgb tex1" [.1 .1 .1] "rgb tex2" [.8 .8 .8]
+  Material "diffuse" "texture reflectance" "checks"
+  Translate 0 0 -1
+  Shape "bilinearmesh"
+      "point3 P" [ -20 -20 0   20 -20 0   -20 20 0   20 20 0 ]
+      "point2 uv" [ 0 0   1 0    1 1   0 1 ]
+AttributeEnd
+
