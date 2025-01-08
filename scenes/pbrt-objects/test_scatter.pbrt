@@ -32,7 +32,7 @@ LightSource "spot"
     "point3 to" [ 0 0 0 ]
     "rgb I" [ 0 1 0 ]
     "float power" 100
-    "float coneangle" 2
+    "float coneangle" 30
     "float conedeltaangle" .1
 
 MakeNamedMedium "simple_medium" 
@@ -42,9 +42,16 @@ MakeNamedMedium "simple_medium"
     # "float n" 144
 
 AttributeBegin
-    Material "interface" # don't give it any characteristics
-    MediumInterface "simple_medium" ""
-    Shape "sphere" "float radius" 1
+    Material "dielectric"
+    Include "tesseract.pbrt"
+AttributeEnd
+
+AttributeBegin
+    Material "interface"
+    # does not work if we put simple_medium in the first quotes
+    MediumInterface "" "simple_medium"
+    Scale .799 .799 .799
+    Include "cube.pbrt"
 AttributeEnd
 
 AttributeBegin
