@@ -1,5 +1,25 @@
 # Progress Log
 
+## Jan. 7
+
+I made two tesseracts (cuvettes) today: 
+- one with a cube inside a cube that has no edges connecting the cubes
+- another that is made up of six 3D trapezoids? all rotated and translated together
+
+Using the second is definitely the way to go,
+as the first does not properly work with dielectrics.
+I would like to try it again sometime, as I think it is cleaner,
+but for now it is best to use the one made from multiple well-defined components.
+
+The behaviour of mediums is still weird to me.
+I need to check out what is being set to the inside medium and what is being set to the outside.
+Currently, what I think is the inside medium does not scatter light coming from
+point lights,
+it only scatters light from area lights.
+
+Checked the source code, first parameter is the inside medium, second parameter is the outside medium.
+This is really weird to me that the second parameter would better scatter than the first.
+
 ## Jan. 6
 
 Set up a test scene to test if the phase functions are working as expected.
