@@ -1,5 +1,12 @@
 # Progress Log
 
+## Jan. 8
+
+Yesterday, I made my own cuvette model manually.
+This brought both some problems and solutions.
+It solved the issue of symmetrical scattering with the other cuvette.
+But, I can't tell if it's still off or the reflection is weird.
+
 ## Jan. 7
 
 I made two tesseracts (cuvettes) today: 
