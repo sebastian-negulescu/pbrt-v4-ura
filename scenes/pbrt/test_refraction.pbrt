@@ -1,0 +1,87 @@
+LookAt -6 3 1.5 # try to look at laser beam
+       # 2 5 1.5  # eye
+       0 0 0  # look at point
+       0 0 1    # up vector
+Camera "perspective" "float fov" 45
+
+Sampler "halton" "integer pixelsamples" 128
+Integrator "volpath"
+    "integer maxdepth" 64 # super important setting for refraction definition
+Film "rgb" "string filename" "./images/test_refraction.png"
+     "integer xresolution" [400] "integer yresolution" [400]
+
+WorldBegin
+
+# uniform blue-ish illumination from all directions
+LightSource "infinite" "rgb L" [ .4 .45 .5 ]
+
+# approximate the sun
+LightSource "distant"  "point3 from" [ -30 40  100 ]
+    "blackbody L" 3000 "float scale" 1.5
+
+# add an emissive to see the scattering
+AttributeBegin
+    AreaLightSource "diffuse" 
+        "rgb L" [ 0.6 0.1 0.4 ] 
+        "float power" 100
+    Translate 0 -3 -0.75
+    Shape "sphere" "float radius" [ .25 ]
+AttributeEnd
+
+# try to add a spotlight
+LightSource "spot"
+    "point3 from" [ -3 -2 0 ]
+    "point3 to" [ 0 0 0 ]
+    "rgb I" [ 0 1 0 ]
+    "float power" 100
+    "float coneangle" 2
+    "float conedeltaangle" .1
+
+MakeNamedMedium "simple_medium" 
+    "string type" "homogeneous" 
+    "string phase_function" "Henyey-Greenstein"
+    # "string phase_function" "Exponentiated Cosine"
+    # "float n" 144
+    "rgb sigma_a" [ 0 0 0 ]
+
+# AttributeBegin
+#     Material "diffuse"
+#         "rgb reflectance" [ 0 0.8 0 ]
+#     Translate -3 0 0
+#     Include "cube.pbrt"
+# AttributeEnd
+
+AttributeBegin
+    Material "diffuse"
+        "rgb reflectance" [ 0 0 0.8 ]
+    Scale 0.2 0.2 0.2
+    Include "cube.pbrt"
+AttributeEnd
+
+AttributeBegin
+    Material "dielectric"
+        # "float roughness" 0.0001
+        "spectrum eta" "glass-BK7"
+    # Include "cube.pbrt"
+    Include "manual_tesseract.pbrt"
+AttributeEnd
+
+AttributeBegin
+    # Material "interface"
+    # does not work if we put simple_medium in the first quotes
+    # MediumInterface "" "simple_medium"
+    # Scale .7999 .7999 .7999
+    # Include "cube.pbrt"
+AttributeEnd
+
+AttributeBegin
+    Texture "checks" "spectrum" "checkerboard"
+        "float uscale" [16] "float vscale" [16]
+        "rgb tex1" [.1 .1 .1] "rgb tex2" [.8 .8 .8]
+    Material "diffuse" "texture reflectance" "checks"
+    Translate 0 0 -1
+    Shape "bilinearmesh"
+        "point3 P" [ -20 -20 0   20 -20 0   -20 20 0   20 20 0 ]
+        "point2 uv" [ 0 0   1 0    1 1   0 1 ]
+AttributeEnd
+

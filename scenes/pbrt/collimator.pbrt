@@ -1,0 +1,14 @@
+ObjectBegin "collimator"
+    AttributeBegin
+        Material "diffuse"
+        Include "tube.pbrt"
+    AttributeEnd
+
+    AttributeBegin
+        Material "dielectric"
+        Translate 0 1 0
+        Scale 1 1.5 1
+        Include "hemisphere_obj.pbrt"
+    AttributeEnd
+ObjectEnd
+

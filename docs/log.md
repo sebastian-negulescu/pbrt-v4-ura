@@ -1,5 +1,38 @@
 # Progress Log
 
+## Jan. 13
+
+Need to make a "directional" area light.
+
+## Jan. 10
+
+Today, we figure out how to get point lights to refract properly.
+Nope.
+Today, we look at some solutions to get point lights to refract properly.
+
+There are three solutions that I thought up:
+- Propagate light sampling to transmission rays too 
+- Use a spherical light and a lens to refract rays in a parallel direction
+- Use a directional light and a wall to block all light but a few controlled rays.
+    This might not work.
+
+## Jan. 9
+
+:facepalm: I figured out the setting for the maximum bounces a ray can take.
+The default is 5 and I've been rocking with that for some unknown reason.
+This setting solves all the problems I've been having and it only took 4 days to find.
+For some reason I thought they'd use russian roulette termination to probabalistically
+extinguish a ray once its light contribution got smaller,
+but I think it's a mix of both.
+The performance hit of cranking the max depth is not bad which makes me think
+that there is also some other criteria for ray termination.
+This was a good discovery though, 
+now we can move on to scattering and see if that helped anything.
+
+Refraction with non-area lights is still broken,
+even though the scattering works.
+Need to see how refractions are implemented and if we can get it to work.
+
 ## Jan. 8
 
 Yesterday, I made my own cuvette model manually.

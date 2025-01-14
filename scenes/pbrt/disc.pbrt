@@ -1,0 +1,40 @@
+#############################
+# Scene metadata:
+# - SourceAsset_Format :
+#     Stanford Polygon Library (PLY) Importer
+
+###############################
+# Cameras (0) total
+
+WorldBegin
+
+#################
+# Lights
+
+###################
+# Textures
+
+
+####################
+# Materials (1) total
+
+
+# - Material 1: 
+#   - Number of Material Properties: 5
+#   - Non-Zero Texture Type Counts: 
+#    - Constants: diffuse 0 specular 0 transparency 0 opacity 0 shininess 0 shininess strength 0 eta 0
+MakeNamedMaterial "" "string type" "diffuse"
+    "rgb reflectance" [ 1 1 1 ]
+
+
+# Object instance definitions
+
+# Geometry
+
+AttributeBegin
+  Transform [ -1 0 0 0 0 0 1 0 0 1 0 0 0 0 0 1]
+  # # - Mesh: <No Name>
+AttributeBegin
+    NamedMaterial ""
+AttributeEnd
+
