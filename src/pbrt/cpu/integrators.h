@@ -76,6 +76,22 @@ class Integrator {
     }
 };
 
+// ParticleIntegrator Definition (not graphical)
+class ParticleIntegrator : public Integrator {
+  public:
+    // ImageTileIntegrator Public Methods
+    ParticleIntegrator(Camera camera, Sampler sampler, Primitive aggregate,
+                        std::vector<Light> lights)
+        : Integrator(aggregate, lights), camera(camera), samplerPrototype(sampler) {}
+
+    void Render();
+
+  protected:
+    // ImageTileIntegrator Protected Members
+    Camera camera;
+    Sampler samplerPrototype;
+};
+
 // ImageTileIntegrator Definition
 class ImageTileIntegrator : public Integrator {
   public:

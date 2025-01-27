@@ -62,6 +62,19 @@ std::string RandomWalkIntegrator::ToString() const {
 // Integrator Method Definitions
 Integrator::~Integrator() {}
 
+// ParticleIntegrator Method Definitions
+void ParticleIntegrator::Render() {
+    /*
+     * Requirements: one laser, one particle, one detector
+     * Procedure:
+     *   From the "laser", shoot many rays at the particle
+     *   Scatter each ray according to its phase function
+     *   Intersect the scattered ray with the detector geometry
+     *   Increment the detector with the scattered ray's radiance
+     */
+    LOG_VERBOSE("Rendering finished");
+}
+
 // ImageTileIntegrator Method Definitions
 void ImageTileIntegrator::Render() {
     // Handle debugStart, if set
