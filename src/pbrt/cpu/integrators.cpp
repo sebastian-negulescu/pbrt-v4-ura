@@ -63,15 +63,24 @@ std::string RandomWalkIntegrator::ToString() const {
 Integrator::~Integrator() {}
 
 // ParticleIntegrator Method Definitions
+std::unique_ptr<ParticleIntegrator> ParticleIntegrator::Create(
+    const ParameterDictionary &parameters, Camera camera, Sampler sampler,
+    Primitive aggregate, std::vector<Light> lights, const FileLoc *loc) {
+    return std::make_unique<ParticleIntegrator>(camera, sampler, aggregate, lights);
+}
+
+std::string ParticleIntegrator::ToString() const {
+    return StringPrintf("[ ParticleIntegrator ]");
+}
+
 void ParticleIntegrator::Render() {
-    /*
-     * Requirements: one laser, one particle, one detector
-     * Procedure:
-     *   From the "laser", shoot many rays at the particle
-     *   Scatter each ray according to its phase function
-     *   Intersect the scattered ray with the detector geometry
-     *   Increment the detector with the scattered ray's radiance
-     */
+    // assert there is only one light (we will use a point light)
+    assert(lights.size() == 1);
+
+    Light l = lights[0];
+    // check if the bounds can give you the light's origin point to make a ray from
+    l.Bounds();
+
     LOG_VERBOSE("Rendering finished");
 }
 
@@ -3695,6 +3704,9 @@ std::unique_ptr<Integrator> Integrator::Create(
     else if (name == "sppm")
         integrator = SPPMIntegrator::Create(parameters, colorSpace, camera, sampler,
                                             aggregate, lights, loc);
+    else if (name == "particle")
+        integrator = ParticleIntegrator::Create(parameters, camera, sampler, aggregate, 
+                                                lights, loc);
     else
         ErrorExit(loc, "%s: integrator type unknown.", name);
 

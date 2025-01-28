@@ -84,6 +84,12 @@ class ParticleIntegrator : public Integrator {
                         std::vector<Light> lights)
         : Integrator(aggregate, lights), camera(camera), samplerPrototype(sampler) {}
 
+    static std::unique_ptr<ParticleIntegrator> Create(
+        const ParameterDictionary &parameters, Camera camera, Sampler sampler,
+        Primitive aggregate, std::vector<Light> lights, const FileLoc *loc);
+
+    std::string ToString() const;
+
     void Render();
 
   protected:
