@@ -10,5 +10,6 @@ Film "rgb" "string filename" "single_particle.png"
 
 WorldBegin
 
-LightSource "point" "rgb L" [ .4 .45 .5 ]
+LightSource "point" 
+    "rgb I" [ .4 .45 .5 ]
 
