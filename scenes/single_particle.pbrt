@@ -10,6 +10,7 @@ Film "rgb" "string filename" "single_particle.png"
 
 WorldBegin
 
+Translate 0 0 -1
 LightSource "point" 
     "rgb I" [ .4 .45 .5 ]
 

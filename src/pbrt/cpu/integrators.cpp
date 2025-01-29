@@ -79,7 +79,20 @@ void ParticleIntegrator::Render() {
 
     Light l = lights[0];
     // check if the bounds can give you the light's origin point to make a ray from
-    l.Bounds();
+    pstd::optional<LightBounds> light_bounds = l.Bounds();
+    assert(light_bounds.has_value());
+
+    Transform w = camera.GetCameraTransform().WorldFromRender();
+    // get the centroid of the light (it is in camera coord frame)
+    Point3f light_centroid = light_bounds->Centroid();
+    // convert to world coord frame
+    Point3f wlc = w(light_centroid);
+
+    Point3f particle_origin(0.f, 0.f, 0.f);
+
+    assert(particle_origin != wlc);
+
+    Ray light_ray(wlc, particle_origin - wlc);
 
     LOG_VERBOSE("Rendering finished");
 }
