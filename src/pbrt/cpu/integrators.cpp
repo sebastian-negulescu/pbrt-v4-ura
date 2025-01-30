@@ -74,25 +74,40 @@ std::string ParticleIntegrator::ToString() const {
 }
 
 void ParticleIntegrator::Render() {
-    // assert there is only one light (we will use a point light)
-    assert(lights.size() == 1);
+    if (lights.size() != 1) {
+        ErrorExit("Must only have one light");
+    }
 
-    Light l = lights[0];
-    // check if the bounds can give you the light's origin point to make a ray from
-    pstd::optional<LightBounds> light_bounds = l.Bounds();
-    assert(light_bounds.has_value());
+    Light light = lights[0];
+    pstd::optional<LightBounds> light_bounds = light.Bounds();
+    if (!light_bounds.has_value()) {
+        ErrorExit("Light has no bounds");
+    }
 
-    Transform w = camera.GetCameraTransform().WorldFromRender();
+    Transform world_frame = camera.GetCameraTransform().WorldFromRender();
     // get the centroid of the light (it is in camera coord frame)
-    Point3f light_centroid = light_bounds->Centroid();
-    // convert to world coord frame
-    Point3f wlc = w(light_centroid);
+    Point3f camera_light_centroid = light_bounds->Centroid();
+    // convert centroid to world coord frame
+    Point3f light_centroid = world_frame(camera_light_centroid);
 
     Point3f particle_origin(0.f, 0.f, 0.f);
 
-    assert(particle_origin != wlc);
+    if (particle_origin == light_centroid) {
+        ErrorExit("particle is at the same place as the light, cannot create ray");
+    }
 
-    Ray light_ray(wlc, particle_origin - wlc);
+    Ray light_ray(light_centroid, particle_origin - light_centroid);
+
+    PointLight *point_light = light.CastOrNullptr<PointLight>();
+    if (point_light == nullptr) {
+        ErrorExit("Not a point light");        
+    }
+    HomogeneousMedium *particle_type = point_light->GetMediumInterface().outside.CastOrNullptr<HomogeneousMedium>();
+    if (particle_type == nullptr) {
+        ErrorExit("Not a homogeneous medium");
+    }
+
+    // works! now we have to make a detector
 
     LOG_VERBOSE("Rendering finished");
 }

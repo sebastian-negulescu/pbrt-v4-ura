@@ -10,6 +10,13 @@ Film "rgb" "string filename" "single_particle.png"
 
 WorldBegin
 
+MakeNamedMedium "particle" 
+    "string type" "homogeneous" 
+    "rgb sigma_s" [100 100 100]
+
+# medium needs to be on the outside to get attached to light
+MediumInterface "" "particle"
+
 Translate 0 0 -1
 LightSource "point" 
     "rgb I" [ .4 .45 .5 ]

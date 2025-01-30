@@ -173,6 +173,11 @@ class LightBase {
         return SampledSpectrum(0.f);
     }
 
+    // added for scattering research only!
+    MediumInterface GetMediumInterface() {
+        return mediumInterface;
+    }
+
   protected:
     // LightBase Protected Methods
     static const DenselySampledSpectrum *LookupSpectrum(Spectrum s);
