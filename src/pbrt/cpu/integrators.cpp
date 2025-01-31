@@ -79,7 +79,25 @@ void ParticleIntegrator::Render() {
     }
 
     Light light = lights[0];
-    pstd::optional<LightBounds> light_bounds = light.Bounds();
+
+    PointLight *point_light = light.CastOrNullptr<PointLight>();
+    if (point_light == nullptr) {
+        ErrorExit("Not a point light");        
+    }
+
+    HomogeneousMedium *particle = point_light->GetMediumInterface().outside
+        .CastOrNullptr<HomogeneousMedium>();
+    if (particle == nullptr) {
+        ErrorExit("Not a homogeneous medium");
+    }
+
+    Point3f particle_origin(0.f, 0.f, 0.f);
+    SampledWavelengths dummy;
+
+    MediumProperties particle_properties = particle->SamplePoint(particle_origin, dummy);
+    PhaseFunction particle_phase = particle_properties.phase;
+
+    pstd::optional<LightBounds> light_bounds = point_light->Bounds();
     if (!light_bounds.has_value()) {
         ErrorExit("Light has no bounds");
     }
@@ -90,26 +108,23 @@ void ParticleIntegrator::Render() {
     // convert centroid to world coord frame
     Point3f light_centroid = world_frame(camera_light_centroid);
 
-    Point3f particle_origin(0.f, 0.f, 0.f);
-
     if (particle_origin == light_centroid) {
         ErrorExit("particle is at the same place as the light, cannot create ray");
     }
 
     Ray light_ray(light_centroid, particle_origin - light_centroid);
 
-    PointLight *point_light = light.CastOrNullptr<PointLight>();
-    if (point_light == nullptr) {
-        ErrorExit("Not a point light");        
-    }
-    HomogeneousMedium *particle_type = point_light->GetMediumInterface().outside.CastOrNullptr<HomogeneousMedium>();
-    if (particle_type == nullptr) {
-        ErrorExit("Not a homogeneous medium");
+    RNG rng;
+    Point2f u{rng.Uniform<Float>(), rng.Uniform<Float>()};
+
+    pstd::optional<PhaseFunctionSample> particle_sample = particle_phase.Sample_p(light_ray.d, u);
+    if (!particle_sample.has_value()) {
+        ErrorExit("No sample value");
     }
 
-    // works! now we have to make a detector
+    Vector3f scattered_ray = particle_sample->wi;
 
-    LOG_VERBOSE("Rendering finished");
+    LOG_VERBOSE("Rendering finished, %s", scattered_ray);
 }
 
 // ImageTileIntegrator Method Definitions
