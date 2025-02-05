@@ -117,12 +117,18 @@ void ParticleIntegrator::Render() {
     RNG rng;
     Point2f u{rng.Uniform<Float>(), rng.Uniform<Float>()};
 
+    // light_ray.d might need to be reversed for the phase function sample
     pstd::optional<PhaseFunctionSample> particle_sample = particle_phase.Sample_p(light_ray.d, u);
     if (!particle_sample.has_value()) {
         ErrorExit("No sample value");
     }
 
     Vector3f scattered_ray = particle_sample->wi;
+
+    Point2i pixelBounds = camera.GetFilm().FullResolution();
+    // need center point of camera too to project the film into space
+    // i think it's the origin, so we will have to transform either it or the rest of the scene
+    // question: how do we transform the origin point to be relative to the camera?
 
     LOG_VERBOSE("Rendering finished, %s", scattered_ray);
 }
