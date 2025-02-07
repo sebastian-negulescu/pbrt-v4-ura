@@ -112,7 +112,8 @@ void ParticleIntegrator::Render() {
         ErrorExit("particle is at the same place as the light, cannot create ray");
     }
 
-    Ray light_ray(light_centroid, particle_origin - light_centroid);
+    Ray light_ray(light_centroid, -(particle_origin - light_centroid));
+    LOG_VERBOSE("ray %s", light_ray);
 
     RNG rng;
     Point2f u{rng.Uniform<Float>(), rng.Uniform<Float>()};
@@ -125,10 +126,27 @@ void ParticleIntegrator::Render() {
 
     Vector3f scattered_ray = particle_sample->wi;
 
-    Point2i pixelBounds = camera.GetFilm().FullResolution();
+    // this will be the resolution in pixels (e.g. 400x400)
+    Bounds2i pixel_bounds = camera.GetFilm().PixelBounds(); // used to be FullResolution
     // need center point of camera too to project the film into space
     // i think it's the origin, so we will have to transform either it or the rest of the scene
     // question: how do we transform the origin point to be relative to the camera?
+    
+    PerspectiveCamera *perspective_camera = camera.CastOrNullptr<PerspectiveCamera>();
+    if (perspective_camera == nullptr) {
+        ErrorExit("Not a perspective camera!");
+    }
+    LOG_VERBOSE("logging camera points");
+    for (Point2i pixel : pixel_bounds) {
+        LOG_VERBOSE("%s", pixel);
+        Point3f camera_point = perspective_camera->cameraFromRaster(Point3f(pixel.x, pixel.y, 0));
+        Ray camera_ray(Point3f(0, 0, 0), Normalize(Vector3f(camera_point)));
+        camera_ray = camera.GetCameraTransform().RenderFromCamera(camera_ray);
+
+        // Point3f camera_point = perspective_camera->cameraFromRaster(Point3f(pixel.x, pixel.y, 0));
+        LOG_VERBOSE("%s", camera_point);
+        LOG_VERBOSE("%s", world_frame(camera_ray));
+    }
 
     LOG_VERBOSE("Rendering finished, %s", scattered_ray);
 }
