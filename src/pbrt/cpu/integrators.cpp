@@ -136,16 +136,34 @@ void ParticleIntegrator::Render() {
     if (perspective_camera == nullptr) {
         ErrorExit("Not a perspective camera!");
     }
+
+    Ray center_ray(Point3f(0, 0, 0), Normalize(Vector3f(perspective_camera->cameraFromRaster(Point3f(0, 0, 0)))));
+    center_ray = camera.GetCameraTransform().RenderFromCamera(center_ray);
+    Ray center_ray_world = world_frame(center_ray);
+    LOG_VERBOSE("center ray: %s, %f", center_ray_world, Length(center_ray_world.d));
+
     LOG_VERBOSE("logging camera points");
     for (Point2i pixel : pixel_bounds) {
         LOG_VERBOSE("%s", pixel);
+
         Point3f camera_point = perspective_camera->cameraFromRaster(Point3f(pixel.x, pixel.y, 0));
+        LOG_VERBOSE("%s", camera_point);
+
         Ray camera_ray(Point3f(0, 0, 0), Normalize(Vector3f(camera_point)));
         camera_ray = camera.GetCameraTransform().RenderFromCamera(camera_ray);
 
-        // Point3f camera_point = perspective_camera->cameraFromRaster(Point3f(pixel.x, pixel.y, 0));
-        LOG_VERBOSE("%s", camera_point);
-        LOG_VERBOSE("%s", world_frame(camera_ray));
+        Ray camera_ray_world = world_frame(camera_ray);
+        LOG_VERBOSE("%s, %f", camera_ray_world, Length(camera_ray_world.d));
+
+        // Point3f plane_point = Point3f(camera_ray_world.d - center_ray_world.d) + center_ray_world.o;
+        double angle_between = AngleBetween(camera_ray_world.d, center_ray_world.d);
+        double scale_factor = cos(angle_between);
+        Vector3f scaled_center_d = Scale(scale_factor, scale_factor, scale_factor)(center_ray_world.d);
+
+        LOG_VERBOSE("%f, %f, %s, %f", angle_between, scale_factor, scaled_center_d, Length(scaled_center_d));
+
+        Vector3f offset = camera_ray_world.d - scaled_center_d;
+        Point3f plane_location = Point3f(offset) + camera_ray_world.o;
     }
 
     LOG_VERBOSE("Rendering finished, %s", scattered_ray);
