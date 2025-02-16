@@ -165,10 +165,12 @@ void ParticleIntegrator::Render() {
         Vector3f offset = camera_ray_world.d - scaled_center_d;
         Point3f plane_location = Point3f(offset) + camera_ray_world.o;
         LOG_VERBOSE("%s, %s", offset, plane_location);
-
-        Vector3f diff = Normalize(Vector3f(Point3f(camera_ray_world.d) - offset));
-        LOG_VERBOSE("%s, %s", diff, center_ray_world);
     }
+
+    Vector3f h = world_frame(camera.GetCameraTransform().RenderFromCamera(Normalize(Vector3f(perspective_camera->cameraFromRaster(Point3f(1, 0, 0)))), 0));
+    Vector3f v = world_frame(camera.GetCameraTransform().RenderFromCamera(Normalize(Vector3f(perspective_camera->cameraFromRaster(Point3f(0, 1, 0)))), 0));
+
+    LOG_VERBOSE("%s, %s", h, v);
 
     LOG_VERBOSE("Rendering finished, %s", scattered_ray);
 }
