@@ -147,30 +147,35 @@ void ParticleIntegrator::Render() {
         LOG_VERBOSE("%s", pixel);
 
         Point3f camera_point = perspective_camera->cameraFromRaster(Point3f(pixel.x, pixel.y, 0));
-        LOG_VERBOSE("%s", camera_point);
 
         Ray camera_ray(Point3f(0, 0, 0), Normalize(Vector3f(camera_point)));
         camera_ray = camera.GetCameraTransform().RenderFromCamera(camera_ray);
 
+        LOG_VERBOSE("previous %s, %f", camera_ray, Length(camera_ray.d));
+
+        // this works!
+        float denom = Dot(-center_ray.d, camera_ray.d);
+        float t = Dot((center_ray.o + center_ray.d) - camera_ray.o, -center_ray.d) / denom;
+        camera_ray.d *= t;
+
+        LOG_VERBOSE("post %s, %f", camera_ray, Length(camera_ray.d));
+
         Ray camera_ray_world = world_frame(camera_ray);
-        LOG_VERBOSE("%s, %f", camera_ray_world, Length(camera_ray_world.d));
 
         // Point3f plane_point = Point3f(camera_ray_world.d - center_ray_world.d) + center_ray_world.o;
         double angle_between = AngleBetween(camera_ray_world.d, center_ray_world.d);
         double scale_factor = cos(angle_between);
         Vector3f scaled_center_d = Scale(scale_factor, scale_factor, scale_factor)(center_ray_world.d);
 
-        LOG_VERBOSE("%f, %f, %s, %f", angle_between, scale_factor, scaled_center_d, Length(scaled_center_d));
-
         Vector3f offset = camera_ray_world.d - scaled_center_d;
         Point3f plane_location = Point3f(offset) + camera_ray_world.o;
-        LOG_VERBOSE("%s, %s", offset, plane_location);
+
+        LOG_VERBOSE("plane location %s", plane_location);
     }
 
-    Vector3f h = world_frame(camera.GetCameraTransform().RenderFromCamera(Normalize(Vector3f(perspective_camera->cameraFromRaster(Point3f(1, 0, 0)))), 0));
-    Vector3f v = world_frame(camera.GetCameraTransform().RenderFromCamera(Normalize(Vector3f(perspective_camera->cameraFromRaster(Point3f(0, 1, 0)))), 0));
-
-    LOG_VERBOSE("%s, %s", h, v);
+    Vector3f ref = world_frame(camera.GetCameraTransform().RenderFromCamera(Normalize(Vector3f(perspective_camera->cameraFromRaster(Point3f(0, 0, 0)))), 0));
+    Vector3f h = world_frame(camera.GetCameraTransform().RenderFromCamera(Normalize(Vector3f(perspective_camera->cameraFromRaster(Point3f(pixel_bounds.pMax.x, 0, 0)))), 0)) - ref;
+    Vector3f v = world_frame(camera.GetCameraTransform().RenderFromCamera(Normalize(Vector3f(perspective_camera->cameraFromRaster(Point3f(0, pixel_bounds.pMax.y, 0)))), 0)) - ref;
 
     LOG_VERBOSE("Rendering finished, %s", scattered_ray);
 }
