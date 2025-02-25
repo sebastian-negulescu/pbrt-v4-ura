@@ -41,6 +41,7 @@
 #include <pbrt/util/string.h>
 
 #include <algorithm>
+#include <vector>
 
 namespace pbrt {
 
@@ -151,41 +152,38 @@ void ParticleIntegrator::Render() {
     h = world_frame(-(h / s_h - center_ray.d));
     v = world_frame(-(v / s_v - center_ray.d));
 
-    LOG_VERBOSE("logging camera points");
+    Allocator patch_allocator;
+    std::vector<TriangleMesh> patches;
     for (Point2i pixel : pixel_bounds) {
-        LOG_VERBOSE("%s", pixel);
-
         Point3f camera_point = perspective_camera->cameraFromRaster(Point3f(pixel.x, pixel.y, 0));
 
         Ray camera_ray(Point3f(0, 0, 0), Normalize(Vector3f(camera_point)));
         camera_ray = camera.GetCameraTransform().RenderFromCamera(camera_ray);
 
-        LOG_VERBOSE("previous %s, %f", camera_ray, Length(camera_ray.d));
-
-        /*
-        float denom = Dot(-center_ray.d, camera_ray.d);
-        float t = t_num / denom;
-        camera_ray.d *= t;
-        */
-
         // center_ray and camera_ray are normalized
         float s = Dot(center_ray.d, camera_ray.d);
         camera_ray.d /= s;
 
-        LOG_VERBOSE("post %s, %f", camera_ray, Length(camera_ray.d));
-
         Ray camera_ray_world = world_frame(camera_ray);
 
-        LOG_VERBOSE("world frame %s", camera_ray_world);
-
         Vector3f offset = camera_ray_world.d - center_ray_world.d;
-        Point3f plane_location = Point3f(offset) + camera_ray_world.o;
+        Point3f patch_location = Point3f(offset) + camera_ray_world.o;
 
-        LOG_VERBOSE("comparison %s, %s, %s", plane_location, plane_location + h, plane_location + v);
+        std::vector<int> indices{0, 1, 2, 1, 3, 2}; 
+        std::vector<Point3f> points{patch_location, patch_location + v, patch_location + h, patch_location + v + h};
+        patches.emplace_back(
+                Transform{}, 
+                false, 
+                indices, 
+                points, 
+                std::vector<Vector3f>{}, 
+                std::vector<Normal3f>{}, 
+                std::vector<Point2f>{}, 
+                std::vector<int>{}, 
+                patch_allocator);
     }
 
-
-    LOG_VERBOSE("Rendering finished, %s", scattered_ray);
+    LOG_VERBOSE("Rendering finished, %d", patches.size());
 }
 
 // ImageTileIntegrator Method Definitions
