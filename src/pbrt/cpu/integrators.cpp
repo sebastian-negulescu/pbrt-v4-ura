@@ -113,19 +113,9 @@ void ParticleIntegrator::Render() {
         ErrorExit("particle is at the same place as the light, cannot create ray");
     }
 
-    Ray light_ray(light_centroid, -(particle_origin - light_centroid));
-    LOG_VERBOSE("ray %s", light_ray);
+    Ray light_ray(light_centroid, particle_origin - light_centroid);
 
     RNG rng;
-    Point2f u{rng.Uniform<Float>(), rng.Uniform<Float>()};
-
-    // light_ray.d might need to be reversed for the phase function sample
-    pstd::optional<PhaseFunctionSample> particle_sample = particle_phase.Sample_p(light_ray.d, u);
-    if (!particle_sample.has_value()) {
-        ErrorExit("No sample value");
-    }
-
-    Vector3f scattered_ray = particle_sample->wi;
 
     // this will be the resolution in pixels (e.g. 400x400)
     Bounds2i pixel_bounds = camera.GetFilm().PixelBounds(); // used to be FullResolution
@@ -141,7 +131,6 @@ void ParticleIntegrator::Render() {
     Ray center_ray(Point3f(0, 0, 0), Normalize(Vector3f(perspective_camera->cameraFromRaster(Point3f(pixel_bounds.pMax.x - 1, pixel_bounds.pMax.y - 1, 0)))));
     center_ray = camera.GetCameraTransform().RenderFromCamera(center_ray);
     Ray center_ray_world = world_frame(center_ray);
-    LOG_VERBOSE("center ray: %s, %f", center_ray_world, Length(center_ray_world.d));
 
     Vector3f h = camera.GetCameraTransform().RenderFromCamera(Ray(Point3f(0, 0, 0), Normalize(Vector3f(perspective_camera->cameraFromRaster(Point3f(1, 0, 0)))))).d;
     Vector3f v = camera.GetCameraTransform().RenderFromCamera(Ray(Point3f(0, 0, 0), Normalize(Vector3f(perspective_camera->cameraFromRaster(Point3f(0, 1, 0)))))).d;
@@ -153,7 +142,8 @@ void ParticleIntegrator::Render() {
     v = world_frame(-(v / s_v - center_ray.d));
 
     Allocator patch_allocator;
-    std::vector<TriangleMesh> patches;
+    std::vector<TriangleMesh *> patch_meshes;
+    std::vector<pstd::vector<Shape>> patches;
     for (Point2i pixel : pixel_bounds) {
         Point3f camera_point = perspective_camera->cameraFromRaster(Point3f(pixel.x, pixel.y, 0));
 
@@ -171,19 +161,40 @@ void ParticleIntegrator::Render() {
 
         std::vector<int> indices{0, 1, 2, 1, 3, 2}; 
         std::vector<Point3f> points{patch_location, patch_location + v, patch_location + h, patch_location + v + h};
-        patches.emplace_back(
-                Transform{}, 
-                false, 
-                indices, 
-                points, 
-                std::vector<Vector3f>{}, 
-                std::vector<Normal3f>{}, 
-                std::vector<Point2f>{}, 
-                std::vector<int>{}, 
-                patch_allocator);
+
+        patch_meshes.push_back(patch_allocator.new_object<TriangleMesh>(
+                    std::move(Transform{}), false, std::move(indices), std::move(points), 
+                    std::vector<Vector3f>{},
+                    std::vector<Normal3f>{},
+                    std::vector<Point2f>{},
+                    std::vector<int>{},
+                    patch_allocator));
+        patches.push_back(std::move(Triangle::CreateTriangles(patch_meshes[patch_meshes.size() - 1], patch_allocator)));
     }
 
-    LOG_VERBOSE("Rendering finished, %d", patches.size());
+    size_t num_rays = 10;
+    for (size_t i = 0; i < num_rays; ++i) {
+        Point2f u{rng.Uniform<Float>(), rng.Uniform<Float>()};
+
+        pstd::optional<PhaseFunctionSample> particle_sample = particle_phase.Sample_p(-light_ray.d, u);
+        if (!particle_sample.has_value()) {
+            ErrorExit("No sample value");
+        }
+
+        Vector3f scattered_dir = particle_sample->wi;
+        Ray scattered_ray{particle_origin, scattered_dir};
+
+        for (pstd::vector<Shape> &patch : patches) {
+            for (Shape &s : patch) {
+                bool intersects = s.IntersectP(scattered_ray);
+                if (intersects) {
+                    LOG_VERBOSE("got an intersection!");
+                }
+            }
+        }
+    }
+
+    // LOG_VERBOSE("Rendering finished, %d", patches.size());
 }
 
 // ImageTileIntegrator Method Definitions
