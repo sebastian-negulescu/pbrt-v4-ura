@@ -159,6 +159,8 @@ void ParticleIntegrator::Render() {
         Vector3f offset = camera_ray_world.d - center_ray_world.d;
         Point3f patch_location = Point3f(offset) + camera_ray_world.o;
 
+        LOG_VERBOSE("location of %s: %s", pixel, patch_location);
+
         std::vector<int> indices{0, 1, 2, 1, 3, 2}; 
         std::vector<Point3f> points{patch_location, patch_location + v, patch_location + h, patch_location + v + h};
 
@@ -183,6 +185,7 @@ void ParticleIntegrator::Render() {
 
         Vector3f scattered_dir = particle_sample->wi;
         Ray scattered_ray{particle_origin, scattered_dir};
+        LOG_VERBOSE("scattered ray %s", scattered_ray);
 
         for (pstd::vector<Shape> &patch : patches) {
             for (Shape &s : patch) {
@@ -194,7 +197,7 @@ void ParticleIntegrator::Render() {
         }
     }
 
-    // LOG_VERBOSE("Rendering finished, %d", patches.size());
+    LOG_VERBOSE("Rendering finished!");
 }
 
 // ImageTileIntegrator Method Definitions
