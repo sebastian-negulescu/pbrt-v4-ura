@@ -208,6 +208,9 @@ void ParticleIntegrator::Render() {
     }
 
     // now we need to write to an image
+    ImageMetadata metadata;
+    camera.InitMetadata(&metadata);
+    camera.GetFilm().WriteImage(metadata, 1.f);
 
     LOG_VERBOSE("Rendering finished! Rays cast, captured, proportion: %u, %u, %f", 
             num_rays, scatters_captured, (float) scatters_captured / num_rays);
