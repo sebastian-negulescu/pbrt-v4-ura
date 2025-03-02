@@ -118,22 +118,24 @@ void ParticleIntegrator::Render() {
     RNG rng;
 
     // this will be the resolution in pixels (e.g. 400x400)
-    Bounds2i pixel_bounds = camera.GetFilm().PixelBounds(); // used to be FullResolution
-    // need center point of camera too to project the film into space
-    // i think it's the origin, so we will have to transform either it or the rest of the scene
-    // question: how do we transform the origin point to be relative to the camera?
+    Bounds2i pixel_bounds = camera.GetFilm().PixelBounds();
     
     PerspectiveCamera *perspective_camera = camera.CastOrNullptr<PerspectiveCamera>();
     if (perspective_camera == nullptr) {
         ErrorExit("Not a perspective camera!");
     }
 
-    Ray center_ray(Point3f(0, 0, 0), Normalize(Vector3f(perspective_camera->cameraFromRaster(Point3f(pixel_bounds.pMax.x - 1, pixel_bounds.pMax.y - 1, 0)))));
+    Ray center_ray(Point3f(0, 0, 0), Normalize(Vector3f(perspective_camera->cameraFromRaster(
+                        Point3f(pixel_bounds.pMax.x - 1, pixel_bounds.pMax.y - 1, 0)))));
     center_ray = camera.GetCameraTransform().RenderFromCamera(center_ray);
     Ray center_ray_world = world_frame(center_ray);
 
-    Vector3f h = camera.GetCameraTransform().RenderFromCamera(Ray(Point3f(0, 0, 0), Normalize(Vector3f(perspective_camera->cameraFromRaster(Point3f(1, 0, 0)))))).d;
-    Vector3f v = camera.GetCameraTransform().RenderFromCamera(Ray(Point3f(0, 0, 0), Normalize(Vector3f(perspective_camera->cameraFromRaster(Point3f(0, 1, 0)))))).d;
+    Vector3f h = camera.GetCameraTransform().RenderFromCamera(Ray(
+                Point3f(0, 0, 0), 
+                Normalize(Vector3f(perspective_camera->cameraFromRaster(Point3f(1, 0, 0)))))).d;
+    Vector3f v = camera.GetCameraTransform().RenderFromCamera(Ray(
+                Point3f(0, 0, 0), 
+                Normalize(Vector3f(perspective_camera->cameraFromRaster(Point3f(0, 1, 0)))))).d;
 
     float s_h = Dot(center_ray.d, h);
     float s_v = Dot(center_ray.d, v);
@@ -143,7 +145,7 @@ void ParticleIntegrator::Render() {
 
     Allocator patch_allocator;
     std::vector<TriangleMesh *> patch_meshes;
-    std::vector<pstd::vector<Shape>> patches;
+    std::vector<std::pair<Point2i, pstd::vector<Shape>>> patches;
     for (Point2i pixel : pixel_bounds) {
         Point3f camera_point = perspective_camera->cameraFromRaster(Point3f(pixel.x, pixel.y, 0));
 
@@ -171,15 +173,18 @@ void ParticleIntegrator::Render() {
                     std::vector<Point2f>{},
                     std::vector<int>{},
                     patch_allocator));
-        patches.push_back(std::move(Triangle::CreateTriangles(patch_meshes[patch_meshes.size() - 1], patch_allocator)));
+        patches.push_back(std::make_pair(pixel, std::move(Triangle::CreateTriangles(patch_meshes[patch_meshes.size() - 1], patch_allocator))));
     }
 
     size_t num_rays = 10;
+    size_t scatters_captured = 0;
     for (size_t i = 0; i < num_rays; ++i) {
         Point2f u{rng.Uniform<Float>(), rng.Uniform<Float>()};
 
+        SampledWavelengths wavelengths; // am I supposed to populate this??
+        pstd::optional<LightLeSample> le_sample = light.SampleLe(Point2f(0.f, 0.f), Point2f(0.f, 0.f), wavelengths, 0);
         pstd::optional<PhaseFunctionSample> particle_sample = particle_phase.Sample_p(-light_ray.d, u);
-        if (!particle_sample.has_value()) {
+        if (!particle_sample.has_value() || !le_sample.has_value()) {
             ErrorExit("No sample value");
         }
 
@@ -187,17 +192,25 @@ void ParticleIntegrator::Render() {
         Ray scattered_ray{particle_origin, scattered_dir};
         LOG_VERBOSE("scattered ray %s", scattered_ray);
 
-        for (pstd::vector<Shape> &patch : patches) {
-            for (Shape &s : patch) {
-                bool intersects = s.IntersectP(scattered_ray);
+        for (auto &patch : patches) {
+            bool intersects = false;
+            for (Shape &s : patch.second) {
+                intersects = s.IntersectP(scattered_ray);
                 if (intersects) {
-                    LOG_VERBOSE("got an intersection!");
+                    scatters_captured++;
+
+                    camera.GetFilm().AddSample(patch.first, le_sample->L, wavelengths, nullptr, 1.f);
+                    break;
                 }
             }
+            if (intersects) break;
         }
     }
 
-    LOG_VERBOSE("Rendering finished!");
+    // now we need to write to an image
+
+    LOG_VERBOSE("Rendering finished! Rays cast, captured, proportion: %u, %u, %f", 
+            num_rays, scatters_captured, (float) scatters_captured / num_rays);
 }
 
 // ImageTileIntegrator Method Definitions
