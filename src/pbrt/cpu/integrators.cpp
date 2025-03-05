@@ -176,7 +176,7 @@ void ParticleIntegrator::Render() {
         patches.push_back(std::make_pair(pixel, std::move(Triangle::CreateTriangles(patch_meshes[patch_meshes.size() - 1], patch_allocator))));
     }
 
-    size_t num_rays = 1;
+    size_t num_rays = 100;
     size_t scatters_captured = 0;
     constexpr float no_jitter = 0.5f;
     for (size_t i = 0; i < num_rays; ++i) {
@@ -184,12 +184,13 @@ void ParticleIntegrator::Render() {
 
         SampledWavelengths wavelengths = camera.GetFilm().SampleWavelengths(no_jitter); // am I supposed to populate this??
         pstd::optional<LightLeSample> le_sample = light.SampleLe(Point2f(0.f, 0.f), Point2f(0.f, 0.f), wavelengths, 0);
-        pstd::optional<PhaseFunctionSample> particle_sample = particle_phase.Sample_p(-light_ray.d, u);
+        pstd::optional<PhaseFunctionSample> particle_sample = particle_phase.Sample_p(-Normalize(light_ray.d), u);
         if (!particle_sample.has_value() || !le_sample.has_value()) {
             ErrorExit("No sample value");
         }
 
-        Vector3f scattered_dir = Vector3f(1.f, 0.f, 0.f); // particle_sample->wi;
+        // Vector3f scattered_dir = Vector3f(1.f, 0.f, 0.f); 
+        Vector3f scattered_dir = particle_sample->wi;
         Ray scattered_ray{particle_origin, scattered_dir};
         LOG_VERBOSE("scattered ray %s", scattered_ray);
 

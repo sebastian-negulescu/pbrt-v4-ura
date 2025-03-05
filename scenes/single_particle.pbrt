@@ -6,7 +6,7 @@ Camera "perspective" "float fov" 45
 Sampler "halton" "integer pixelsamples" 128
 Integrator "particle"
 Film "rgb" "string filename" "images/single_particle.png"
-     "integer xresolution" [2] "integer yresolution" [2]
+     "integer xresolution" [200] "integer yresolution" [200]
 
 Option "rendercoordsys" "world"
 
@@ -15,6 +15,8 @@ WorldBegin
 MakeNamedMedium "particle" 
     "string type" "homogeneous" 
     "rgb sigma_s" [100 100 100]
+    "string phase_function" "Henyey-Greenstein"
+    "float g" 1.
 
 # medium needs to be on the outside to get attached to light
 MediumInterface "" "particle"
