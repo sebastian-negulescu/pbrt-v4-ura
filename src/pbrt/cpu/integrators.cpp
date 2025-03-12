@@ -125,10 +125,11 @@ void ParticleIntegrator::Render() {
         ErrorExit("Not a perspective camera!");
     }
 
-    Ray center_ray(Point3f(0, 0, 0), Normalize(Vector3f(perspective_camera->cameraFromRaster(
-                        Point3f(pixel_bounds.pMax.x - 1, pixel_bounds.pMax.y - 1, 0)))));
+    Ray center_ray(Point3f(0, 0, 0), Vector3f(0, 0, 1));
     center_ray = camera.GetCameraTransform().RenderFromCamera(center_ray);
     Ray center_ray_world = world_frame(center_ray);
+
+    LOG_VERBOSE("center ray: %s, %s", center_ray, center_ray_world);
 
     Vector3f h = camera.GetCameraTransform().RenderFromCamera(Ray(
                 Point3f(0, 0, 0), 
@@ -137,11 +138,15 @@ void ParticleIntegrator::Render() {
                 Point3f(0, 0, 0), 
                 Normalize(Vector3f(perspective_camera->cameraFromRaster(Point3f(0, 1, 0)))))).d;
 
+    LOG_VERBOSE("%s, %s", h ,v);
+
     float s_h = Dot(center_ray.d, h);
     float s_v = Dot(center_ray.d, v);
     
     h = world_frame(-(h / s_h - center_ray.d));
     v = world_frame(-(v / s_v - center_ray.d));
+
+    LOG_VERBOSE("%s, %s", h ,v);
 
     Allocator patch_allocator;
     std::vector<TriangleMesh *> patch_meshes;
@@ -189,11 +194,12 @@ void ParticleIntegrator::Render() {
             ErrorExit("No sample value");
         }
 
-        // Vector3f scattered_dir = Vector3f(1.f, 0.f, 0.f); 
-        Vector3f scattered_dir = particle_sample->wi;
+        Vector3f scattered_dir = Vector3f(1.f, 0.f, 0.f); 
+        // Vector3f scattered_dir = particle_sample->wi;
         Ray scattered_ray{particle_origin, scattered_dir};
         LOG_VERBOSE("scattered ray %s", scattered_ray);
 
+        int counter = 0;
         for (auto &patch : patches) {
             bool intersects = false;
             for (Shape &s : patch.second) {
@@ -201,11 +207,13 @@ void ParticleIntegrator::Render() {
                 if (intersects) {
                     scatters_captured++;
 
+                    LOG_VERBOSE("captured by %d patch", counter);
                     camera.GetFilm().AddSample(patch.first, le_sample->L, wavelengths, nullptr, 1.f);
                     break;
                 }
             }
             if (intersects) break;
+            counter++;
         }
     }
 
